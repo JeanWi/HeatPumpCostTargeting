@@ -156,7 +156,7 @@ area = (
 )
 
 # Combine everything
-st.text("Grey area is profitable area")
+st.text("Grey area is reasonable industrial heat pump cost from literature")
 chart = (area + line + point + current1 + current2).properties(
     height=400, width=700
 )
