@@ -1,0 +1,24 @@
+name: Testing
+
+on:
+  pull_request:
+    branches:
+      - 'main'
+
+jobs:
+  check_target_branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if PR is from develop branch
+        if: ${{ !startsWith(github.event.pull_request.head.ref, 'develop') }}
+        run: |
+          echo ${{ github.event.pull_request.head.ref }}
+          echo "Pull request is not from the develop branch"
+          exit 1
+  autoformatting:
+    needs: check_target_branch
+    uses: ./.github/workflows/autoformatting.yml
+  testing:
+    needs: autoformatting
+    uses: ./.github/workflows/testing.yml
+    secrets: inherit
