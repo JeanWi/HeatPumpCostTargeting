@@ -110,13 +110,16 @@ data = pd.DataFrame({xlabel: x_vals, "NPV (EUR/kW)": y_vals})
 # Calculate current point NPV
 npv_current = calculate_allowable_investment_per_kw_el(T_l, T_h, operating_hours, p_th, p_el, interest_rate, lifetime)
 
+x_limits = (min(x_vals), max(x_vals))
+y_limits = (min(0, min(y_vals)), max(y_vals)*1.1)
+
 # --- Plot ---
 line = (
     alt.Chart(data)
     .mark_line()
     .encode(
-        x=alt.X(f"{xlabel}:Q", title=xlabel),
-        y=alt.Y("NPV (EUR/kW):Q", title="Allowable CAPEX (EUR/kW)"),
+        x=alt.X(f"{xlabel}:Q", title=xlabel).scale(domain=x_limits),
+        y=alt.Y("NPV (EUR/kW):Q", title="Allowable CAPEX (EUR/kW)").scale(domain=y_limits),
         tooltip=[xlabel, "NPV (EUR/kW)"]
     )
 )
@@ -125,8 +128,8 @@ point = (
     alt.Chart(pd.DataFrame({xlabel: [x_current], "NPV (EUR/kW)": [npv_current]}))
     .mark_point(size=100, color="red")
     .encode(
-        x=alt.X(f"{xlabel}:Q"),
-        y=alt.Y("NPV (EUR/kW):Q"),
+        x=alt.X(f"{xlabel}:Q").scale(domain=x_limits),
+        y=alt.Y("NPV (EUR/kW):Q").scale(domain=y_limits),
         tooltip=[xlabel, "NPV (EUR/kW)"]
     )
 )
@@ -134,23 +137,23 @@ point = (
 current1 = (
     alt.Chart(pd.DataFrame({xlabel: [x_current]}))
     .mark_rule(color="black", strokeDash=[5, 5])
-    .encode(x=alt.X(f"{xlabel}:Q"))
+    .encode(x=alt.X(f"{xlabel}:Q").scale(domain=x_limits))
 )
 
 current2 = (
     alt.Chart(pd.DataFrame({"NPV (EUR/kW)": [y_current]}))
     .mark_rule(color="black", strokeDash=[5, 5])
-    .encode(y="NPV (EUR/kW):Q")
+    .encode(y=alt.Y("NPV (EUR/kW):Q").scale(domain=y_limits))
 )
 
-y_min, y_max = 487, max(y_vals)
+y_min, y_max = 487, max(y_vals)*1.1
 
 # Create shaded area spanning full x range
 area = (
     alt.Chart(pd.DataFrame({"y_min": [y_min], "y_max": [y_max]}))
     .mark_rect(opacity=0.2, color="grey")
     .encode(
-        y=alt.Y("y_min:Q", title=None),
+        y=alt.Y("y_min:Q", title=None).scale(domain=y_limits),
         y2="y_max:Q"
     )
 )
