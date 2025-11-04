@@ -17,16 +17,16 @@ def calculate_allowable_investment_per_kw_el(T_l, T_h, h, p_th, p_el, r, t, ex_e
     return (p_th*cop/1000 - p_el/1000) * h * f
 
 st.markdown("**Application**")
-T_l = st.number_input("Temperature of heat source in Celsius", value=15.0, min_value = -20.0, max_value = 150.0, step = 0.5)
-T_h = st.number_input("Temperature of heat sink in Celsius", value=45.0, min_value = 0.0, max_value = 250.0, step = 0.5)
+T_l = st.number_input("Temperature of heat source in Celsius", value=30.0, min_value = -20.0, max_value = 150.0, step = 0.5)
+T_h = st.number_input("Temperature of heat sink in Celsius", value=90.0, min_value = 0.0, max_value = 250.0, step = 0.5)
 operating_hours = st.number_input("Operating hours per year", value=6000, min_value = 0, max_value = 8760, step = 1)
 exergetic_efficiency = st.number_input("Exergetic efficiency (%)", value=60.0, min_value=0.0, max_value=100.0, step=0.5)
 
 st.markdown("**Alternative heat provision**")
-p_th = st.number_input("Cost of alternative heat provision (EUR/MW)", value=60, min_value = 0, max_value = 300)
+p_th = st.number_input("Cost of alternative heat provision (EUR/MW)", value=50, min_value = 0, max_value = 300)
 
 st.markdown("**Electricity price**")
-p_el = st.number_input("Cost of electricity for heat pump (EUR/MW)", value=100, min_value = 0, max_value = 300)
+p_el = st.number_input("Cost of electricity for heat pump (EUR/MW)", value=150, min_value = 0, max_value = 300)
 
 st.markdown("**Economic assumptions**")
 lifetime = st.number_input("Lifetime of heat pump", value=15, min_value = 0, max_value = 100)
@@ -159,7 +159,7 @@ current2 = (
     .encode(y=alt.Y("NPV (EUR/kW):Q", title="Allowable CAPEX (EUR/kW)").scale(domain=y_limits))
 )
 
-y_min, y_max = 1200, 10e9
+y_min, y_max = 1200, 10e6
 
 # Create shaded area spanning full x range
 area = (
