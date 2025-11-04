@@ -133,7 +133,7 @@ line = (
     .encode(
         x=alt.X(f"{xlabel}:Q", title=xlabel).scale(domain=x_limits),
         y=alt.Y("NPV (EUR/kW):Q", title="Allowable CAPEX (EUR/kW)").scale(domain=y_limits),
-        tooltip=[xlabel, "NPV (EUR/kW)"]
+        tooltip=[xlabel, "NPV (EUR/kW):Q"]
     )
 )
 
