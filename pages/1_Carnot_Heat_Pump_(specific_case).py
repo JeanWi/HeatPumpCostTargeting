@@ -20,6 +20,7 @@ st.markdown("**Application**")
 T_l = st.number_input("Temperature of heat source in Celsius", value=15.0, min_value = -20.0, max_value = 150.0, step = 0.5)
 T_h = st.number_input("Temperature of heat sink in Celsius", value=45.0, min_value = 0.0, max_value = 250.0, step = 0.5)
 operating_hours = st.number_input("Operating hours per year", value=6000, min_value = 0, max_value = 8760, step = 1)
+exergetic_efficiency = st.number_input("Exergetic efficiency (%)", value=60.0, min_value=0.0, max_value=100.0, step=0.5)
 
 st.markdown("**Alternative heat provision**")
 p_th = st.number_input("Cost of alternative heat provision (EUR/MW)", value=60, min_value = 0, max_value = 300)
@@ -32,8 +33,6 @@ lifetime = st.number_input("Lifetime of heat pump", value=15, min_value = 0, max
 interest_rate = st.number_input("Interest rate", value=5.0, min_value = 0.1, max_value = 20.0)
 
 st.markdown("**Plotting options**")
-on_x_axis = st.selectbox("Plot on x axis", ["electricity price", "heat provision cost of alternative", "sink temperature", "source temperature", "operating hours", "interest rate", "lifetime"])
-
 num_points = 200
 
 # Define variable sweep settings
@@ -80,7 +79,15 @@ x_settings = {
         "xlabel": "Lifetime (years)",
         "x_current": lifetime
     },
+    "exergetic efficiency": {
+        "range": (0, 100),
+        "arg": "exergetic efficiency",
+        "xlabel": "exergetic efficiency (%)",
+        "x_current": exergetic_efficiency
+    },
 }
+on_x_axis = st.selectbox("Plot on x axis", x_settings.keys())
+
 
 # Select configuration
 cfg = x_settings[on_x_axis]
@@ -96,19 +103,25 @@ def calc(x):
         p_el if cfg["arg"] != "p_el" else x,
         interest_rate if cfg["arg"] != "interest_rate" else x,
         lifetime if cfg["arg"] != "lifetime" else x,
+        exergetic_efficiency/100 if cfg["arg"] != "exergetic efficiency" else x/100,
     )
 
 y_vals = [calc(x) for x in x_vals]
+
+# st.text(cfg["arg"])
+# st.table(x_vals)
+# st.table(y_vals)
+
 x_current = cfg["x_current"]
 xlabel = cfg["xlabel"]
 
-y_current = calculate_allowable_investment_per_kw_el(T_l, T_h, operating_hours, p_th, p_el, interest_rate, lifetime)
+y_current = calculate_allowable_investment_per_kw_el(T_l, T_h, operating_hours, p_th, p_el, interest_rate, lifetime, exergetic_efficiency/100)
 
 # --- Prepare data ---
 data = pd.DataFrame({xlabel: x_vals, "NPV (EUR/kW)": y_vals})
 
 # Calculate current point NPV
-npv_current = calculate_allowable_investment_per_kw_el(T_l, T_h, operating_hours, p_th, p_el, interest_rate, lifetime)
+npv_current = calculate_allowable_investment_per_kw_el(T_l, T_h, operating_hours, p_th, p_el, interest_rate, lifetime, exergetic_efficiency/100)
 
 x_limits = (min(x_vals), max(x_vals))
 y_limits = (min(0, min(y_vals)), max(y_vals)*1.1)
@@ -129,7 +142,7 @@ point = (
     .mark_point(size=100, color="red")
     .encode(
         x=alt.X(f"{xlabel}:Q").scale(domain=x_limits),
-        y=alt.Y("NPV (EUR/kW):Q").scale(domain=y_limits),
+        y=alt.Y("NPV (EUR/kW):Q", title="Allowable CAPEX (EUR/kW)").scale(domain=y_limits),
         tooltip=[xlabel, "NPV (EUR/kW)"]
     )
 )
@@ -143,17 +156,17 @@ current1 = (
 current2 = (
     alt.Chart(pd.DataFrame({"NPV (EUR/kW)": [y_current]}))
     .mark_rule(color="black", strokeDash=[5, 5])
-    .encode(y=alt.Y("NPV (EUR/kW):Q").scale(domain=y_limits))
+    .encode(y=alt.Y("NPV (EUR/kW):Q", title="Allowable CAPEX (EUR/kW)").scale(domain=y_limits))
 )
 
-y_min, y_max = 487, max(y_vals)*1.1
+y_min, y_max = 1200, max(y_vals)*10
 
 # Create shaded area spanning full x range
 area = (
     alt.Chart(pd.DataFrame({"y_min": [y_min], "y_max": [y_max]}))
     .mark_rect(opacity=0.2, color="grey")
     .encode(
-        y=alt.Y("y_min:Q", title=None).scale(domain=y_limits),
+        y=alt.Y("y_min:Q", title="Allowable CAPEX (EUR/kW)").scale(domain=y_limits),
         y2="y_max:Q"
     )
 )
@@ -162,7 +175,7 @@ area = (
 st.text("Grey area is reasonable industrial heat pump cost from literature")
 chart = (area + line + point + current1 + current2).properties(
     height=400, width=700
-)
+).interactive()
 
 st.altair_chart(chart, width='stretch')
 # st.text(f"COP is {round((1 - T_l / T_h) ** -1,1)}")
