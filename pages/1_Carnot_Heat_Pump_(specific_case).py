@@ -159,7 +159,7 @@ current2 = (
     .encode(y=alt.Y("NPV (EUR/kW):Q", title="Allowable CAPEX (EUR/kW)").scale(domain=y_limits))
 )
 
-y_min, y_max = 1200, max(y_vals)*10
+y_min, y_max = 1200, 10e9
 
 # Create shaded area spanning full x range
 area = (

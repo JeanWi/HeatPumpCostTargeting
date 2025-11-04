@@ -48,10 +48,10 @@ elif on_x_axis == "source temperature":
     }
     current_x = T_h
 
-exergetic_efficiency = st.number_input("Exergetic efficiency (%)", value=100.0, min_value=0.0, max_value=100.0, step=0.5)
+exergetic_efficiency = st.number_input("Exergetic efficiency (%)", value=60.0, min_value=0.0, max_value=100.0, step=0.5)
 
 
-st.markdown("**Show relative electricity prices**")
+st.markdown("**Relative electricity prices**")
 plot_relative_prices_countries = st.multiselect("Show relative prices for the following regions: ", relative_prices.index)
 plot_relative_prices_year = st.selectbox("Show relative prices for the following time: ", relative_prices.columns)
 
