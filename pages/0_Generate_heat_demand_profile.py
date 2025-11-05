@@ -3,6 +3,9 @@ import numpy as np
 import pandas as pd
 import altair as alt
 import math
+from src import manage_cash
+
+manage_cash()
 
 st.set_page_config(
     page_title="Carnot Heat Pump",
@@ -25,9 +28,6 @@ profile_options = [
 process_type = st.selectbox(
     "What process would you like to look at?", profile_options
 )
-
-
-
 
 weekends_different = st.checkbox("Weekends different", value=False)
 
@@ -129,3 +129,11 @@ chart = (line).properties(
 ).interactive()
 
 st.altair_chart(chart, width='stretch')
+
+st.markdown("**Save heat demand profile**")
+profile_name = st.text_input("Profile name")
+if st.button("Save heat demand profile"):
+    if profile_name not in st.session_state['demand_profiles']:
+        st.session_state['demand_profiles'][profile_name] = df[["datetime", "demand"]]
+    else:
+        st.markdown(f"{profile_name} already exists")

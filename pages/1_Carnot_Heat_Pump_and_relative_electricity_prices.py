@@ -2,7 +2,9 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import altair as alt
+from src import manage_cash
 
+manage_cash()
 
 st.set_page_config(
     page_title="Carnot Heat Pump",
@@ -26,10 +28,10 @@ def get_relative_prices():
 relative_prices = get_relative_prices()
 
 st.markdown("**Heat specifications**")
-on_x_axis = st.selectbox("Plot on x axis", ["sink temperature", "source temperature"])
+on_x_axis = st.selectbox("Fix the...", ["Sink temperature", "Source temperature"])
 
-if on_x_axis == "sink temperature":
-    T_l = st.number_input("Temperature of heat source in Celsius", value=15.0, min_value=-20.0, max_value=150.0,
+if on_x_axis == "Source temperature":
+    T_l = st.number_input("Heat source temperature in Celsius", value=15.0, min_value=-20.0, max_value=150.0,
                           step=0.5)
     x_settings = {
         "range": (int(T_l) + 20, 250),
@@ -38,8 +40,8 @@ if on_x_axis == "sink temperature":
         "legend_title": f"Source temperature {round(T_l,1)}°C",
     }
     current_x = T_l
-elif on_x_axis == "source temperature":
-    T_h = st.number_input("Temperature of heat sink in Celsius", value=45.0, min_value=0.0, max_value=250.0, step=0.5)
+elif on_x_axis == "Sink temperature":
+    T_h = st.number_input("Heat sink temperature in Celsius", value=45.0, min_value=0.0, max_value=250.0, step=0.5)
     x_settings = {
         "range": (-10, int(T_h)-20),
         "arg": "T_l",
@@ -48,7 +50,7 @@ elif on_x_axis == "source temperature":
     }
     current_x = T_h
 
-exergetic_efficiency = st.number_input("Exergetic efficiency (%)", value=60.0, min_value=0.0, max_value=100.0, step=0.5)
+exergetic_efficiency = st.number_input("Exergetic efficiency of heat pump (%)", value=60.0, min_value=0.0, max_value=100.0, step=0.5)
 
 
 st.markdown("**Relative electricity prices**")
@@ -98,15 +100,16 @@ line = (
     )
 )
 
-area = (
+area1 = (
     alt.Chart(data)
-    .mark_area(opacity=0.3, color="grey")
+    .mark_area(opacity=0.3, color="green")
     .encode(
         x=alt.X(f"{xlabel}:Q", title=xlabel).scale(domain=x_limits),
         y=alt.Y("Relative electricity price:Q", title="Relative electricity price").scale(domain=y_limits),
         tooltip=[xlabel, "Relative electricity price"]
     )
 )
+
 
 vertical = (
     alt.Chart(pd.DataFrame({xlabel: [current_x]}))
@@ -149,7 +152,7 @@ text_data = pd.DataFrame({
 
 
 # Combine everything
-chart = (area + line + vertical + horizontal).properties(
+chart = (area1 + line + vertical + horizontal).properties(
     height=400, width=700
 ).interactive()
 
