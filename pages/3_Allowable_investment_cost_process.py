@@ -19,7 +19,7 @@ st.markdown("**Alternative heat provision**")
 p_th = st.number_input("Cost of alternative heat provision (EUR/MWth)", value=50, min_value = 0, max_value = 2000)/1000
 
 st.markdown("**Electricity price**")
-profile_type = st.selectbox("Type", ["Constant electricity price", "Price profile (day ahead)"])
+profile_type = st.selectbox("Type", ["Constant electricity price", "Price profile (day ahead, excluding taxes and levies)"])
 
 
 if profile_type == "Constant electricity price":
@@ -43,12 +43,13 @@ else:
     p_el_profiles = p_el_profiles.loc[p_el_profiles.index.year == year_sel]
 
     industrial_prices = process_price_data("data/industrial_el_prices.csv") *1000
-    industrial_prices = pd.DataFrame(industrial_prices.loc[ctr_sel,:])
-    industrial_prices["year"] = industrial_prices.index.to_series().str.extract(r"(\d{4})").astype(int)
-    industrial_prices_avg = industrial_prices.groupby("year")[ctr_sel].mean()
-    if year_sel in industrial_prices_avg:
-        industrial_prices_avg = industrial_prices_avg.loc[year_sel]
-        st.info(f"Average industrial electricity price for this year was: {industrial_prices_avg} EUR/MWh \n")
+    if ctr_sel in industrial_prices:
+        industrial_prices = pd.DataFrame(industrial_prices.loc[ctr_sel,:])
+        industrial_prices["year"] = industrial_prices.index.to_series().str.extract(r"(\d{4})").astype(int)
+        industrial_prices_avg = industrial_prices.groupby("year")[ctr_sel].mean()
+        if year_sel in industrial_prices_avg:
+            industrial_prices_avg = industrial_prices_avg.loc[year_sel]
+            st.info(f"Average industrial electricity price from EUROSTAT for this year was: {industrial_prices_avg} EUR/MWh \n")
 
     if p_el_profiles.isna().sum().sum() > 1:
         st.warning(f"Electricity prices contains missing values. Don't trust the results.")
