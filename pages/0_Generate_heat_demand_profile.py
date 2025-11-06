@@ -1,25 +1,22 @@
 import streamlit as st
-import numpy as np
 import pandas as pd
 import altair as alt
-import math
 from src import manage_cash
+from src.profile_generation import *
 
 manage_cash()
 
 st.set_page_config(
-    page_title="Carnot Heat Pump",
+    page_title="Heat demand profile",
 )
 
-# hp_analysis_type = st.selectbox(label= "Select type of heat pump", options = ["Carnot Heat Pump"])
+# Application
+st.markdown("**Application**")
+T_l = st.number_input("Temperature of heat source in Celsius", value=30.0, min_value = -20.0, max_value = 150.0, step = 0.5)
+T_h = st.number_input("Temperature of heat sink in Celsius", value=90.0, min_value = 0.0, max_value = 250.0, step = 0.5)
 
-def calculate_allowable_investment_per_kw_el(T_l, T_h, h, p_th, p_el, r, t, ex_eta=1):
-    r = r/ 100
-    cop = (1 - (T_l + 273) / (T_h+ 273)) ** -1 * ex_eta
-    f = ((1-(1/(1+r)**t))/r)
-    return (p_th*cop/1000 - p_el/1000) * h * f
-
-st.markdown("**Process specifications**  \nGenerates the heat demand profile")
+# Process specification
+st.markdown("**Process specifications** ")
 # Process type
 profile_options = [
     "Batch process",
@@ -29,10 +26,12 @@ process_type = st.selectbox(
     "What process would you like to look at?", profile_options
 )
 
-weekends_different = st.checkbox("Weekends different", value=False)
+weekend_different = st.checkbox("Weekends different", value=False)
 
-if weekends_different:
+if weekend_different:
     weekend_scale = st.number_input("Scale weekends to x%", min_value=0, max_value=100, step=1)
+else:
+    weekend_scale = 1
 
 
 # Options
@@ -67,34 +66,13 @@ elif process_type == "Batch process":
         hour_off = st.number_input("Hour of day when process stops", min_value=0.0, max_value=24.0, step=0.25, value=24.0)
 
 # Generate process
-date_rng = pd.date_range(start='2025-01-01', end='2025-12-31 23:45:00', freq='15min')
-df = pd.DataFrame(date_rng, columns=['datetime'])
-df['demand'] = 0
-df['day_of_week'] = df['datetime'].dt.dayofweek
-df['scaled_process'] = 1
-if weekends_different:
-    df['scaled_process'] = df['day_of_week'].isin([5, 6]).apply(lambda x: weekend_scale / 100 if x else 1)
+df = generate_demand_profile_template(weekend_different, weekend_scale)
 
 if process_type == "Batch process":
-    available_time_per_day = hour_off - hour_on
-    batches_per_day = available_time_per_day/(length_off+length_on)
-
-    profile_one_batch = [1] * int(length_on * 4) + [0] * int(length_off * 4)
-    profile_n_batches = profile_one_batch * math.floor(batches_per_day)
-    profile_day_beginning = [0] * int(hour_on * 4) + profile_n_batches
-    hours_missing = 24*4 - len(profile_day_beginning)
-    profile_day = profile_day_beginning + [0]*int(hours_missing)
-    profile_week = profile_day * 7
-    profile_year = profile_day * 365
-
-    df.loc[:, 'demand'] = profile_year
+    df.loc[:, 'demand'] = generate_batch_process(hour_on, hour_off, length_on, length_off)
 
 elif process_type == "Continuous process":
-    profile_day = [x for x in heat_demand["demand"].to_list() for _ in range(4)]
-    profile_week = profile_day * 7
-    profile_year = profile_day * 365
-
-    df.loc[:, 'demand'] = profile_year
+    df.loc[:, 'demand'] = generate_continuous_process(heat_demand["demand"].to_list())
 
 df['demand'] = df['demand'] * df['scaled_process']
 
@@ -134,6 +112,7 @@ st.markdown("**Save heat demand profile**")
 profile_name = st.text_input("Profile name")
 if st.button("Save heat demand profile"):
     if profile_name not in st.session_state['demand_profiles']:
-        st.session_state['demand_profiles'][profile_name] = df[["datetime", "demand"]]
+        st.session_state['demand_profiles'][profile_name] = {"T_h": T_h, "T_l":T_l, "profile": df[["datetime", "demand"]]}
+        st.markdown(f"{profile_name} saved")
     else:
         st.markdown(f"{profile_name} already exists")

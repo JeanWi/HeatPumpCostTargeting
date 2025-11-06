@@ -4,6 +4,7 @@ import pandas as pd
 import altair as alt
 
 from src import manage_cash
+from src.carnot_hp_calculations import calculate_allowable_investment_per_kw_el
 
 manage_cash()
 st.set_page_config(
@@ -11,12 +12,6 @@ st.set_page_config(
 )
 
 # hp_analysis_type = st.selectbox(label= "Select type of heat pump", options = ["Carnot Heat Pump"])
-
-def calculate_allowable_investment_per_kw_el(T_l, T_h, h, p_th, p_el, r, t, ex_eta=1):
-    r = r/ 100
-    cop = (1 - (T_l + 273) / (T_h+ 273)) ** -1 * ex_eta
-    f = ((1-(1/(1+r)**t))/r)
-    return (p_th*cop/1000 - p_el/1000) * h * f
 
 st.markdown("**Application**")
 T_l = st.number_input("Temperature of heat source in Celsius", value=30.0, min_value = -20.0, max_value = 150.0, step = 0.5)
@@ -103,7 +98,7 @@ def calc(x):
         operating_hours if cfg["arg"] != "operating_hours" else x,
         p_th if cfg["arg"] != "p_th" else x,
         p_el if cfg["arg"] != "p_el" else x,
-        interest_rate if cfg["arg"] != "interest_rate" else x,
+        interest_rate/100 if cfg["arg"] != "interest_rate" else x/100,
         lifetime if cfg["arg"] != "lifetime" else x,
         exergetic_efficiency/100 if cfg["arg"] != "exergetic efficiency" else x/100,
     )
@@ -117,13 +112,13 @@ y_vals = [calc(x) for x in x_vals]
 x_current = cfg["x_current"]
 xlabel = cfg["xlabel"]
 
-y_current = calculate_allowable_investment_per_kw_el(T_l, T_h, operating_hours, p_th, p_el, interest_rate, lifetime, exergetic_efficiency/100)
+y_current = calculate_allowable_investment_per_kw_el(T_l, T_h, operating_hours, p_th, p_el, interest_rate/100, lifetime, exergetic_efficiency / 100)
 
 # --- Prepare data ---
 data = pd.DataFrame({xlabel: x_vals, "NPV (EUR/kW)": y_vals})
 
 # Calculate current point NPV
-npv_current = calculate_allowable_investment_per_kw_el(T_l, T_h, operating_hours, p_th, p_el, interest_rate, lifetime, exergetic_efficiency/100)
+npv_current = calculate_allowable_investment_per_kw_el(T_l, T_h, operating_hours, p_th, p_el, interest_rate/100, lifetime, exergetic_efficiency / 100)
 
 x_limits = (min(x_vals), max(x_vals))
 y_limits = (min(0, min(y_vals)), max(y_vals)*1.1)

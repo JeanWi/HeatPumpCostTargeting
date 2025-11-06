@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import altair as alt
 from src import manage_cash
+from src.carnot_hp_calculations import calculate_profitable_relative_price
+from src.get_price_data import get_relative_prices
 
 manage_cash()
 
@@ -11,19 +13,6 @@ st.set_page_config(
 )
 
 # hp_analysis_type = st.selectbox(label= "Select type of heat pump", options = ["Carnot Heat Pump"])
-def calculate_profitable_relative_price(T_l, T_h, ex_eta=1):
-    return (1 - (T_l + 273) / (T_h+ 273)) ** -1 * ex_eta
-
-def get_relative_prices():
-    def process_price_data(path):
-        df = pd.read_csv(path, index_col=0).apply(pd.to_numeric, errors='coerce')
-        df = df.dropna(axis=1, how='all')
-        return df.dropna(axis=0, how='any')
-
-    p_el = process_price_data("data/industrial_el_prices.csv")
-    p_th = process_price_data("data/industrial_gas_prices.csv")
-    p_rel = p_el.divide(p_th)
-    return p_rel.dropna(axis=0, how='any')
 
 relative_prices = get_relative_prices()
 
