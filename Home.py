@@ -23,7 +23,6 @@ st.markdown("**Generate process heat demand profile**  \n"
             "the allowable investment costs for a process operation over a full year. This can be done in 'Allowable "
             "investment cost (specific case)'"
             )
-
 st.markdown("**Allowable investment cost (specific case)**  \n"
             "Calculates the allowable maximal investment cost for each of the processes defined in the section before."
             "Different electricity price assumptions can be taken."

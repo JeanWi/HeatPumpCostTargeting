@@ -27,7 +27,6 @@ if profile_type == "Constant electricity price":
     p_el = [p_el] * 8760*4
 else:
     ctrs_available = [f.replace(".csv", "") for f in os.listdir("data/european_wholesale_electricity_price_data_hourly") if f.endswith(".csv")]
-    ctrs_available.remove("all_countries")
     ctr_sel = st.selectbox("Use price from country", ctrs_available)
 
     p_el_profiles = pd.read_csv(f"data/european_wholesale_electricity_price_data_hourly/{ctr_sel}.csv", header=[0])
