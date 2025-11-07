@@ -9,7 +9,7 @@ from src.get_price_data import get_relative_prices
 manage_cash()
 
 st.set_page_config(
-    page_title="Carnot Heat Pump",
+    page_title="Profitability condition",
 )
 
 # hp_analysis_type = st.selectbox(label= "Select type of heat pump", options = ["Carnot Heat Pump"])
