@@ -18,12 +18,16 @@ st.markdown("**Allowable investment cost (general)**  \n"
             "operational hours, electricity prices, interest rate, lifetime and cost of alternative heat generation"
             "and calculates the maximal allowable heat pump investment cost for the respective application."
             )
-st.markdown("**Generate process heat demand profile**  \n"
-            "Allows to generate an annual heat demand profile for batch and continuous processes to be used to calculate"
-            "the allowable investment costs for a process operation over a full year. This can be done in 'Allowable "
-            "investment cost (specific case)'"
-            )
 st.markdown("**Allowable investment cost (specific case)**  \n"
             "Calculates the allowable maximal investment cost for each of the processes defined in the section before."
             "Different electricity price assumptions can be taken."
+            )
+st.markdown("**Generate process heat demand profile**  \n"
+            "Allows to generate an hourly heat demand profile for batch and continuous processes as well as for a "
+            "number of predefined industries to be used to calculate "
+            "the allowable investment costs for a process operation over a full year. This can be done in 'Allowable "
+            "investment cost (specific case)'"
+            )
+st.markdown("**Generate electricity price profile**  \n"
+            "Allows to generate an hourly electricity price profile. At the moment, this profile is not further used."
             )
