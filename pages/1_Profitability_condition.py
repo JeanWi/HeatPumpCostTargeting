@@ -12,37 +12,42 @@ st.set_page_config(
     page_title="Profitability condition",
 )
 
-# hp_analysis_type = st.selectbox(label= "Select type of heat pump", options = ["Carnot Heat Pump"])
+st.markdown("This page calculates the maximum relative price for a heat pump to "
+            "be operationally profitable compared to an alternative "
+            "heat supply technology.")
 
 relative_prices = get_relative_prices()
 
-st.markdown("**Heat specifications**")
+st.markdown("**Process specifications**")
 on_x_axis = st.selectbox("Fix the...", ["Sink temperature", "Source temperature"])
 
 if on_x_axis == "Source temperature":
     T_l = st.number_input("Heat source temperature in Celsius", value=15.0, min_value=-20.0, max_value=150.0,
                           step=0.5)
     x_settings = {
-        "range": (int(T_l) + 20, 250),
+        "range": (int(T_l) + 10, 250),
         "arg": "T_h",
         "xlabel": "Sink temperature (°C)",
         "legend_title": f"Source temperature {round(T_l,1)}°C",
     }
     current_x = T_l
 elif on_x_axis == "Sink temperature":
-    T_h = st.number_input("Heat sink temperature in Celsius", value=45.0, min_value=0.0, max_value=250.0, step=0.5)
+    T_h = st.number_input("Heat sink temperature in Celsius", value=90.0, min_value=0.0, max_value=250.0, step=0.5)
     x_settings = {
-        "range": (-10, int(T_h)-20),
+        "range": (-10, int(T_h)-10),
         "arg": "T_l",
         "xlabel": "Source temperature (°C)",
         "legend_title": f"Sink temperature {round(T_h,1)}°C",
     }
     current_x = T_h
 
+
+st.markdown("**Heat pump specifications**")
 exergetic_efficiency = st.number_input("Exergetic efficiency of heat pump (%)", value=60.0, min_value=0.0, max_value=100.0, step=0.5)
 
 
-st.markdown("**Relative electricity prices**")
+st.markdown("**Plot actual industrial electricity prices**")
+st.markdown("Prices are taken from EUROSTAT")
 plot_relative_prices_countries = st.multiselect("Show relative prices for the following regions: ", relative_prices.index)
 plot_relative_prices_year = st.selectbox("Show relative prices for the following time: ", relative_prices.columns)
 
