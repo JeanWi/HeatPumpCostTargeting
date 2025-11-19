@@ -1,8 +1,6 @@
 import pandas as pd
 import altair as alt
 import streamlit as st
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 
 from src.price_profile_generation import fit_electricty_price_trends, generate_electricity_price_profile, \
     load_electricity_price_profile
