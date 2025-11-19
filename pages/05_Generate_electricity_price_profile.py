@@ -80,3 +80,17 @@ chart = (
 )
 
 st.altair_chart(chart, width='stretch')
+
+@st.cache_data
+def convert_for_download(df):
+    return df.to_csv().encode("utf-8")
+csv = convert_for_download(p_plot_sel)
+
+st.download_button(
+    label="Download electricity prices as csv",
+    data=csv,
+    file_name="electricity_prices.csv",
+    mime="text/csv",
+    icon=":material/download:",
+)
+
