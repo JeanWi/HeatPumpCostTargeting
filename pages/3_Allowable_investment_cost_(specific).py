@@ -4,9 +4,9 @@ from src import manage_cash
 import altair as alt
 import numpy as np
 import os
-from src.get_price_data import process_price_data
 
-from src.carnot_hp_calculations import *
+from src.get_price_data import process_price_data
+from src.calculate_allowable_investment_cost import calculate_allowable_investment_cost
 
 manage_cash()
 
@@ -70,27 +70,16 @@ else:
     total_costs = pd.DataFrame(columns=['Allowable costs in EUR/kW'])
     for profile_name in st.session_state['demand_profiles'].keys():
         heat_demand = st.session_state['demand_profiles'][profile_name]["profile"]
-        heat_demand["p_el"] = p_el[0:len(heat_demand)]
+        heat_demand = heat_demand.set_index('datetime')
+        heat_demand = heat_demand["demand"]
+        p_el = pd.DataFrame(p_el, index=heat_demand.index, columns=['p_el'])
+        p_el = p_el["p_el"]
+
         T_l = st.session_state['demand_profiles'][profile_name]["T_l"]
         T_h = st.session_state['demand_profiles'][profile_name]["T_h"]
-        cop = calculate_cop(T_l, T_h, exergetic_efficiency)
 
-        delta_t = heat_demand["datetime"].diff().dropna().mode()[0].total_seconds() / 3600
+        allowable_costs = calculate_allowable_investment_cost(heat_demand, p_el, p_th, T_l, T_h, exergetic_efficiency, interest_rate, lifetime)
 
-        # cost alternative
-        heat_demand["heat_consumption"] = heat_demand["demand"]*delta_t
-        total_heat_demand = heat_demand["heat_consumption"].sum()
-        total_cost_alternative = total_heat_demand * p_th
-
-        # cost hp
-        heat_demand["electricity_power"] = heat_demand["demand"] / cop
-        heat_demand["electricity_consumption"] = heat_demand["electricity_power"]*delta_t
-        heat_demand["electricity_costs"] = heat_demand["electricity_consumption"] * heat_demand["p_el"]
-
-        total_cost_hp = heat_demand["electricity_costs"].sum()
-        electric_capacity_hp = 1/cop
-        f = calculate_annuity_factor(interest_rate, lifetime)
-        allowable_costs = (total_cost_alternative - total_cost_hp) / electric_capacity_hp * f
         new_profile_name = profile_name + " " + str(int(T_l)) + "->" + str(int(T_h))
         total_costs.loc[new_profile_name,'Allowable costs in EUR/kW'] = allowable_costs
 
