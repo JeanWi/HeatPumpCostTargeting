@@ -310,21 +310,34 @@ def get_fuel_type(df: pd.DataFrame) -> pd.DataFrame:
        'Other liquids', 'Derived gases', 'Biomass and waste',
        'Distributed steam', 'Diesel oil and liquid biofuels', 'Natural gas and biogas',
        'Solar and geothermal', 'Ambient heat', 'Electricity', 'Solids',
-       'Fuel oil', 'Derived gases', 'Coke'}
+       'Fuel oil', 'Derived gases', 'Coke', 'Diesel oil', 'Natural gas', 'Naphtha'}
 
     electricity_driven_activities = {'Lighting', 'Air compressors', 'Motor drives', 'Fans and pumps'}
 
     def extract_fuel(row):
         for col in ["level_3"]:
-            val = row[col]
             if row[col] in electricity_driven_activities:
                 return "Electricity"
+
+        for col in ["level_3", "level_4"]:
+            value = row.get(col)
+            if isinstance(value, str):
+                value_lower = value.lower()
+                if any(k in value_lower for k in ["electr", "Microwave", "grinding"]):
+                    return "Electricity"
+
+        for col in ["level_3", "level_4"]:
+            value = row.get(col)
+            if isinstance(value, str):
+                value_lower = value.lower()
+                if any(k in value_lower for k in ["Natural gas and biogas"]):
+                    return "Natural gas and biogas"
 
         for col in ["level_4", "level_5"]:
             val = row[col]
             if pd.notna(val) and val in possible_fuels:
                 return val
-        return None
+        return "Other"
 
     df["fuel_type"] = df.apply(extract_fuel, axis=1)
     return df
