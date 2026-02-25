@@ -256,6 +256,7 @@ def process_sheet(sheet: openpyxl.worksheet.worksheet.Worksheet, country: str, s
 
         if (sector_next is not None) and (score_next != 0) and (score_next > score):
             continue
+        code = get_cell_value(sheet, r, 105)
 
         # For each year column, get value
         for col, year in year_cols.items():
@@ -276,6 +277,7 @@ def process_sheet(sheet: openpyxl.worksheet.worksheet.Worksheet, country: str, s
                 "Type": sheet_type.lower(),
                 "Indicator": indicator,
                 "Value": val,
+                "Code": code
             }
             rows_out.append(rowd)
     logger.info("Extracted %d rows from sheet %s", len(rows_out), sheet.title)
@@ -300,47 +302,47 @@ def find_industry_workbooks(country_dir: Path) -> List[Path]:
     # Look for files matching *Industry*.xlsx (case insensitive)
     matches = [p for p in country_dir.glob("*.xlsx") if "industry" in p.name.lower()]
     return matches
-
-def get_fuel_type(df: pd.DataFrame) -> pd.DataFrame:
-    """Infer fuel type from Indicator column using simple heuristics."""
-
-    #Fuel types (directly inferred from level_4 or level_5)
-    possible_fuels = {'LPG', 'Diesel oil and liquid biofuels', 'Fuel oil',
-       'Natural gas and biogas', 'Solids', 'Refinery gas',
-       'Other liquids', 'Derived gases', 'Biomass and waste',
-       'Distributed steam', 'Diesel oil and liquid biofuels', 'Natural gas and biogas',
-       'Solar and geothermal', 'Ambient heat', 'Electricity', 'Solids',
-       'Fuel oil', 'Derived gases', 'Coke', 'Diesel oil', 'Natural gas', 'Naphtha'}
-
-    electricity_driven_activities = {'Lighting', 'Air compressors', 'Motor drives', 'Fans and pumps'}
-
-    def extract_fuel(row):
-        for col in ["level_3"]:
-            if row[col] in electricity_driven_activities:
-                return "Electricity"
-
-        for col in ["level_3", "level_4"]:
-            value = row.get(col)
-            if isinstance(value, str):
-                value_lower = value.lower()
-                if any(k in value_lower for k in ["electr", "Microwave", "grinding"]):
-                    return "Electricity"
-
-        for col in ["level_3", "level_4"]:
-            value = row.get(col)
-            if isinstance(value, str):
-                value_lower = value.lower()
-                if any(k in value_lower for k in ["Natural gas and biogas"]):
-                    return "Natural gas and biogas"
-
-        for col in ["level_4", "level_5"]:
-            val = row[col]
-            if pd.notna(val) and val in possible_fuels:
-                return val
-        return "Other"
-
-    df["fuel_type"] = df.apply(extract_fuel, axis=1)
-    return df
+#
+# def get_fuel_type(df: pd.DataFrame) -> pd.DataFrame:
+#     """Infer fuel type from Indicator column using simple heuristics."""
+#
+#     #Fuel types (directly inferred from level_4 or level_5)
+#     possible_fuels = {'LPG', 'Diesel oil and liquid biofuels', 'Fuel oil',
+#        'Natural gas and biogas', 'Solids', 'Refinery gas',
+#        'Other liquids', 'Derived gases', 'Biomass and waste',
+#        'Distributed steam', 'Diesel oil and liquid biofuels', 'Natural gas and biogas',
+#        'Solar and geothermal', 'Ambient heat', 'Electricity', 'Solids',
+#        'Fuel oil', 'Derived gases', 'Coke', 'Diesel oil', 'Natural gas', 'Naphtha'}
+#
+#     electricity_driven_activities = {'Lighting', 'Air compressors', 'Motor drives', 'Fans and pumps'}
+#
+#     def extract_fuel(row):
+#         for col in ["level_3"]:
+#             if row[col] in electricity_driven_activities:
+#                 return "Electricity"
+#
+#         for col in ["level_3", "level_4"]:
+#             value = row.get(col)
+#             if isinstance(value, str):
+#                 value_lower = value.lower()
+#                 if any(k in value_lower for k in ["electr", "Microwave", "grinding"]):
+#                     return "Electricity"
+#
+#         for col in ["level_3", "level_4"]:
+#             value = row.get(col)
+#             if isinstance(value, str):
+#                 value_lower = value.lower()
+#                 if any(k in value_lower for k in ["Natural gas and biogas"]):
+#                     return "Natural gas and biogas"
+#
+#         for col in ["level_4", "level_5"]:
+#             val = row[col]
+#             if pd.notna(val) and val in possible_fuels:
+#                 return val
+#         return "Other"
+#
+#     df["fuel_type"] = df.apply(extract_fuel, axis=1)
+#     return df
 
 
 
@@ -364,25 +366,26 @@ for cdir in countries:
 
     df = pd.DataFrame(all_rows)
     df = df[df["Value"].notna()]
+    df = df[df["Code"].notna()]
 
-    levels = (
-        df["Label"]
-        .str.split(">", expand=True)
-        .apply(lambda c: c.str.strip())
-    )
+    df = df.join(df["Code"].str.split(".", expand=True).rename(
+        columns={0: "Variable", 1: "Unit", 2: "MS_code", 3: "Sector", 4: "Subsector", 5: "Process", 6: "End_use",
+                 7: "Fuel"}
+    ))
 
-    levels.columns = [f"level_{i + 1}" for i in range(levels.shape[1])]
-    df = pd.concat([df, levels], axis=1)
-    df = df.rename(columns={"level_1": "variable_type"})
-    df = df.rename(columns={"level_2": "sub_sector"})
 
-    df = get_fuel_type(df)
 
-    df_filtered = df[df["Sector_long"] == "Iron and steel"]
-    df_filtered = df_filtered[df_filtered["variable_type"] == "Detailed split of energy consumption by subsector (ktoe)"]
-    df_filtered = df_filtered[df_filtered["Type"] == "fec"]
-    df_filtered = df_filtered[df_filtered["Year"] == 2000]
-    df_sum = df_filtered[["sub_sector", "level_3", "Value"]].groupby(["sub_sector", "level_3"]).sum().reset_index()
+    # levels = (
+    #     df["Label"]
+    #     .str.split(">", expand=True)
+    #     .apply(lambda c: c.str.strip())
+    # )
+    #
+    # levels.columns = [f"level_{i + 1}" for i in range(levels.shape[1])]
+    # df = pd.concat([df, levels], axis=1)
+    # df = df.rename(columns={"level_1": "variable_type"})
+    # df = df.rename(columns={"level_2": "sub_sector"})
+
 
 
     out_file = out_dir / f"jrc_idees_industry_long_{country_code}.csv"
