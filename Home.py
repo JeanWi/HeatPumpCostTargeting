@@ -31,3 +31,7 @@ st.markdown("**Generate process heat demand profile**  \n"
 st.markdown("**Generate electricity price profile**  \n"
             "Allows to generate an hourly electricity price profile. At the moment, this profile is not further used."
             )
+
+age = st.slider("How old are you?", 0, 130, 25)
+
+st.write(age)
